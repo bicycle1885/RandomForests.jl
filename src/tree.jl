@@ -16,11 +16,11 @@ type Node{T} <: Element
     right::Int
 end
 
-type Leaf <: Element
+type ClassificationLeaf <: Element
     counts::Vector{Int}
     impurity::Float64
 
-    function Leaf(example, samples::Vector{Int}, impurity::Float64)
+    function ClassificationLeaf(example, samples::Vector{Int}, impurity::Float64)
         counts = zeros(Int, example.n_labels)
         for s in samples
             label = example.y[s]
@@ -30,13 +30,32 @@ type Leaf <: Element
     end
 end
 
-majority(leaf::Leaf) = indmax(leaf.counts)
+majority(leaf::ClassificationLeaf) = indmax(leaf.counts)
+
+type RegressionLeaf <: Element
+    mean::Float64
+    impurity::Float64
+
+    function RegressionLeaf(example, samples::Vector{Int}, impurity::Float64)
+        new(mean(example.y[samples]), impurity)
+    end
+end
+
+Base.mean(leaf::RegressionLeaf) = leaf.mean
 
 immutable Undef <: Element; end
 const undef = Undef()
 
+abstract Criterion
+
+immutable GiniCriterion <: Criterion; end  # Gini index
+immutable MSECriterion <: Criterion; end  # Mean Sequared Error
+const Gini = GiniCriterion()
+const MSE = MSECriterion()
+
 # parameters to build a tree
 immutable Params
+    criterion::Criterion
     max_features::Int
     max_depth::Int
     min_samples_split::Int
@@ -59,8 +78,8 @@ function next_index!(tree::Tree)
     tree.index += 1
 end
 
-function fit!(tree::Tree, example, max_features::Int, max_depth::Int, min_samples_split::Int)
-    params = Params(max_features, max_depth, min_samples_split)
+function fit!(tree::Tree, example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
+    params = Params(criterion, max_features, max_depth, min_samples_split)
     samples = where(example.sample_weight)
     next_index!(tree)
     build_tree(tree, example, samples, tree.index, 1, params)
@@ -81,12 +100,21 @@ function where(v::AbstractVector)
     indices
 end
 
+function leaf(example, samples, ::GiniCriterion)
+    ClassificationLeaf(example, samples, impurity(samples, example, trues(length(example.y)), Gini))
+end
+
+function leaf(example, samples, ::MSECriterion)
+    RegressionLeaf(example, samples, impurity(samples, example, trues(length(example.y)), MSE))
+end
+
 function build_tree(tree, example, samples, index, depth, params::Params)
     n_features = example.n_features
     n_samples = length(samples)
 
     if depth >= params.max_depth || n_samples < params.min_samples_split
-        tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y))))
+        #tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y)), params.criterion))
+        tree.nodes[index] = leaf(example, samples, params.criterion)
         return
     end
 
@@ -100,8 +128,8 @@ function build_tree(tree, example, samples, index, depth, params::Params)
         pop!(boundaries)
         for boundary in boundaries
             filter = convert(BitVector, example.x[:, j] .<= boundary)
-            left_impurity = impurity(samples, example, filter)
-            right_impurity = impurity(samples, example, ~filter)
+            left_impurity = impurity(samples, example, filter, params.criterion)
+            right_impurity = impurity(samples, example, ~filter, params.criterion)
             n_left_samples = countnz(filter[samples])
             n_right_samples = countnz(~filter[samples])
             if n_left_samples == 0 || n_right_samples == 0
@@ -120,7 +148,8 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     end
 
     if best_feature == 0
-        tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y))))
+        #tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y)), params.criterion))
+        tree.nodes[index] = leaf(example, samples, params.criterion)
     else
         left = next_index!(tree)
         right = next_index!(tree)
@@ -132,7 +161,8 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     return
 end
 
-function impurity(samples::Vector{Int}, example, filter::BitVector)
+# Gini index impurity
+function impurity(samples::Vector{Int}, example, filter::BitVector, ::GiniCriterion)
     counts = zeros(Float64, example.n_labels)
     n_samples = 0.
     for s in samples
@@ -151,6 +181,30 @@ function impurity(samples::Vector{Int}, example, filter::BitVector)
     1. - gini_index
 end
 
+# Mean Squared Error impurity
+function impurity(samples::Vector{Int}, example, filter::BitVector, ::MSECriterion)
+    mean = 0.
+    n_samples = 0.
+
+    for s in samples
+        if filter[s]
+            mean += example.y[s]
+            n_samples += example.sample_weight[s]
+        end
+    end
+    mean /= n_samples
+
+    mse = 0.
+    for s in samples
+        if filter[s]
+            error = example.y[s] - mean
+            mse += error * error
+        end
+    end
+
+    mse / n_samples
+end
+
 function predict(tree::Tree, x::AbstractVector)
     node = getroot(tree)
 
@@ -163,8 +217,10 @@ function predict(tree::Tree, x::AbstractVector)
                 # go right
                 node = getright(tree, node)
             end
-        elseif isa(node, Leaf)
+        elseif isa(node, ClassificationLeaf)
             return majority(node)
+        elseif isa(node, RegressionLeaf)
+            return mean(node)
         else
             error("found invalid type of node (type: $(typeof(node)))")
         end

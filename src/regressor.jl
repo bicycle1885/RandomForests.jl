@@ -12,7 +12,7 @@ type Regressor
             throw(DimensionMismatch(""))
         end
 
-        resolve_max_features(rf.max_features, n_features)
+        n_max_features = resolve_max_features(rf.max_features, n_features)
         @assert 0 < n_max_features <= n_features
 
         improvements = zeros(Float64, n_features)
@@ -22,3 +22,44 @@ type Regressor
 end
 
 typealias RandomForestRegressor RandomForest{Regressor}
+
+function fit!(rf::RandomForestRegressor, x, y)
+    learner = Regressor(rf, x, y)
+    n_samples = learner.n_samples
+
+    # pre-allocation
+    bootstrap = Array(Int, n_samples)
+    sample_weight = Array(Float64, n_samples)
+
+    for b in 1:rf.n_estimators
+        rand!(1:n_samples, bootstrap)
+        set_weight!(bootstrap, sample_weight)
+        example = Example(x, y, sample_weight)
+        tree = Trees.Tree()
+        Trees.fit!(tree, example, Trees.MSE, learner.n_max_features, rf.max_depth, rf.min_samples_split)
+        learner.trees[b] = tree
+    end
+
+    rf.learner = learner
+    return
+end
+
+function predict(rf::RandomForestRegressor, x)
+    if is(rf.learner, nothing)
+        error("not yet trained")
+    end
+
+    n_samples = size(x, 1)
+    output = Array(Float64, n_samples)
+    vs = Array(Float64, rf.n_estimators)
+
+    for i in 1:n_samples
+        for b in 1:rf.n_estimators
+            tree = rf.learner.trees[b]
+            vs[b] = Trees.predict(tree, x[i, :])
+        end
+        output[i] = mean(vs)
+    end
+
+    output
+end

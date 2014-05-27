@@ -56,7 +56,7 @@ function fit!(rf::RandomForestClassifier, x, y)
         set_weight!(bootstrap, sample_weight)
         example = Example(x, y_encoded, sample_weight)
         tree = Trees.Tree()
-        Trees.fit!(tree, example, learner.n_max_features, rf.max_depth, rf.min_samples_split)
+        Trees.fit!(tree, example, Trees.Gini, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
     end
 

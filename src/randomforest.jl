@@ -8,7 +8,7 @@ type RandomForest{T}
     # learner
     learner::Union(T, Nothing)
 
-    function RandomForest(;n_estimators::Int=100, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2)
+    function RandomForest(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2)
         if n_estimators < 1
             error("n_estimators is too small (got: $n_estimators)")
         end
