@@ -38,6 +38,7 @@ const undef = Undef()
 # parameters to build a tree
 immutable Params
     max_features::Int
+    max_depth::Int
     min_samples_split::Int
 end
 
@@ -58,11 +59,11 @@ function next_index!(tree::Tree)
     tree.index += 1
 end
 
-function fit!(tree::Tree, example, max_features::Int, min_samples_split::Int)
-    params = Params(max_features, min_samples_split)
+function fit!(tree::Tree, example, max_features::Int, max_depth::Int, min_samples_split::Int)
+    params = Params(max_features, max_depth, min_samples_split)
     samples = where(example.sample_weight)
     next_index!(tree)
-    build_tree(tree, example, samples, tree.index, params)
+    build_tree(tree, example, samples, tree.index, 1, params)
     return
 end
 
@@ -80,11 +81,11 @@ function where(v::AbstractVector)
     indices
 end
 
-function build_tree(tree, example, samples, index, params::Params)
+function build_tree(tree, example, samples, index, depth, params::Params)
     n_features = example.n_features
     n_samples = length(samples)
 
-    if n_samples < params.min_samples_split
+    if depth >= params.max_depth || n_samples < params.min_samples_split
         tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y))))
         return
     end
@@ -124,8 +125,8 @@ function build_tree(tree, example, samples, index, params::Params)
         left = next_index!(tree)
         right = next_index!(tree)
         tree.nodes[index] = Node(best_feature, best_threshold, best_impurity, left, right)
-        build_tree(tree, example, best_split_left, left, params)
-        build_tree(tree, example, best_split_right, right, params)
+        build_tree(tree, example, best_split_left, left, depth, params)
+        build_tree(tree, example, best_split_right, right, depth, params)
     end
 
     return

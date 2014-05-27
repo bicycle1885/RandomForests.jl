@@ -49,7 +49,9 @@ begin
     n_samples, n_features = size(x)
     example = Example(x, y)
     tree = RandomForests.Trees.Tree()
-    RandomForests.Trees.fit!(tree, example, n_features, 2)
+    max_depth = 1000
+    min_samples_split = 2
+    RandomForests.Trees.fit!(tree, example, n_features, max_depth, min_samples_split)
     for i in 1:n_samples
         @test RandomForests.Trees.predict(tree, vec(x[i, :])) == y[i]
     end
