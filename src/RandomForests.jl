@@ -1,5 +1,11 @@
 module RandomForests
 
-# package code goes here
+using DataFrames
 
-end # module
+export RandomForestClassifier, Example, fit!, predict
+
+include("example.jl")
+include("tree.jl")
+include("classifier.jl")
+
+end # RandomForests module
