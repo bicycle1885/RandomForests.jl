@@ -72,7 +72,7 @@ type RandomForestClassifier
             error("max_depth is too small (got: $max_depth)")
         end
 
-        if min_samples_split < 1
+        if min_samples_split <= 1
             error("min_sample_split is too small (got: $min_samples_split)")
         end
 
