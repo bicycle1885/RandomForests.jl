@@ -18,22 +18,7 @@ type Classifier
             throw(DimensionMismatch(""))
         end
 
-        n_max_features = begin
-            max_features = rf.max_features
-
-            if is(max_features, :sqrt)
-                ifloor(sqrt(n_features))
-            elseif isa(max_features, Integer)
-                max(int(max_features), n_features)
-            elseif isa(max_features, FloatingPoint)
-                ifloor(n_features * max_features)
-            elseif is(max_features, nothing)
-                n_features
-            else
-                error("max_features is invalid: $max_features")
-            end
-        end
-
+        n_max_features = resolve_max_features(rf.max_features, n_features)
         @assert 0 < n_max_features <= n_features
 
         label_mapping = labelmap(y)

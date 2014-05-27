@@ -34,3 +34,17 @@ type RandomForest{T}
         new(n_estimators, max_features, max_depth, min_samples_split, nothing)
     end
 end
+
+function resolve_max_features(max_features::Any, n_features::Int)
+    if is(max_features, :sqrt)
+        ifloor(sqrt(n_features))
+    elseif isa(max_features, Integer)
+        max(int(max_features), n_features)
+    elseif isa(max_features, FloatingPoint)
+        ifloor(n_features * max_features)
+    elseif is(max_features, nothing)
+        n_features
+    else
+        error("max_features is invalid: $max_features")
+    end
+end
