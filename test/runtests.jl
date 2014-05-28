@@ -7,7 +7,7 @@ using RandomForests
 function accuracy(given::AbstractVector, predicted::AbstractVector)
     @assert length(given) == length(predicted)
     counteq = 0
-    for i in 1:length(given)
+    for i in 1:endof(given)
         if given[i] == predicted[i]
             counteq += 1
         end

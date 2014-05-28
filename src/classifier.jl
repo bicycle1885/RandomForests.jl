@@ -32,7 +32,7 @@ typealias RandomForestClassifier RandomForest{Classifier}
 function set_weight!(bootstrap::Vector{Int}, sample_weight::Vector{Float64})
     @assert length(bootstrap) == length(sample_weight)
     # initialize weight
-    for i in 1:length(sample_weight)
+    for i in 1:endof(sample_weight)
         sample_weight[i] = 0.0
     end
     # set weight
@@ -88,7 +88,7 @@ end
 
 function normalize!(v)
     s = sum(v)
-    for i in 1:length(v)
+    for i in 1:endof(v)
         v[i] = v[i] / s
     end
     return
