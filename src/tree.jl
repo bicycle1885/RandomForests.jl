@@ -128,7 +128,6 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     n_samples = length(samples)
 
     if depth >= params.max_depth || n_samples < params.min_samples_split
-        #tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y)), params.criterion))
         tree.nodes[index] = leaf(example, samples, params.criterion)
         return
     end
@@ -163,7 +162,6 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     end
 
     if best_feature == 0
-        #tree.nodes[index] = Leaf(example, samples, impurity(samples, example, trues(length(example.y)), params.criterion))
         tree.nodes[index] = leaf(example, samples, params.criterion)
     else
         left = next_index!(tree)
