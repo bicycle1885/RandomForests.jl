@@ -1,6 +1,5 @@
 using MLBase
-
-Tree = Trees.Tree
+import .Trees: Tree
 
 # internal data structure for a random forest classifier
 type Classifier
@@ -60,6 +59,7 @@ function fit!(rf::RandomForestClassifier, x, y)
         learner.trees[b] = tree
     end
 
+    set_improvements!(learner)
     rf.learner = learner
     return
 end
@@ -84,4 +84,12 @@ function predict(rf::RandomForestClassifier, x)
     end
 
     labeldecode(rf.learner.label_mapping, output)
+end
+
+function normalize!(v)
+    s = sum(v)
+    for i in 1:length(v)
+        v[i] = v[i] / s
+    end
+    return
 end

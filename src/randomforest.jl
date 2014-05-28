@@ -1,3 +1,4 @@
+import .Trees: getroot, getleft, getright, isnode, n_samples, impurity
 type RandomForest{T}
     # parameters
     n_estimators::Int
@@ -47,4 +48,37 @@ function resolve_max_features(max_features::Any, n_features::Int)
     else
         error("max_features is invalid: $max_features")
     end
+end
+
+function feature_importances(rf::RandomForest)
+    if is(rf.learner, nothing)
+        error("not yet trained")
+    end
+    rf.learner.improvements
+end
+
+function set_improvements!(learner)
+    improvements = learner.improvements
+
+    for tree in learner.trees
+        root = getroot(tree)
+        add_improvements!(tree, root, improvements)
+    end
+    normalize!(improvements)
+end
+
+function add_improvements!(tree, node, improvements)
+    if isnode(node)
+        left = getleft(tree, node)
+        right = getright(tree, node)
+        n_left_samples = n_samples(left)
+        n_right_samples = n_samples(right)
+        averaged_impurity = (impurity(left) * n_left_samples + impurity(right) * n_right_samples) / (n_left_samples + n_right_samples)
+        improvement = impurity(node) - averaged_impurity
+        improvements[node.feature] += improvement
+
+        add_improvements!(tree, left, improvements)
+        add_improvements!(tree, right, improvements)
+    end
+    return
 end

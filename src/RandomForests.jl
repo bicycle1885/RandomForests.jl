@@ -2,7 +2,7 @@ module RandomForests
 
 using DataFrames
 
-export RandomForestClassifier, RandomForestRegressor, Example, fit!, predict
+export RandomForestClassifier, RandomForestRegressor, Example, fit!, predict, feature_importances
 
 include("example.jl")
 include("tree.jl")

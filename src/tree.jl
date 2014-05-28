@@ -12,13 +12,17 @@ type Node{T} <: Element
     feature::Int
     threshold::T
     impurity::Float64
+    n_samples::Int
     left::Int
     right::Int
 end
 
-type ClassificationLeaf <: Element
+abstract Leaf <: Element
+
+type ClassificationLeaf <: Leaf
     counts::Vector{Int}
     impurity::Float64
+    n_samples::Int
 
     function ClassificationLeaf(example, samples::Vector{Int}, impurity::Float64)
         counts = zeros(Int, example.n_labels)
@@ -26,18 +30,19 @@ type ClassificationLeaf <: Element
             label = example.y[s]
             counts[label] += int(example.sample_weight[s])
         end
-        new(counts, impurity)
+        new(counts, impurity, length(samples))
     end
 end
 
 majority(leaf::ClassificationLeaf) = indmax(leaf.counts)
 
-type RegressionLeaf <: Element
+type RegressionLeaf <: Leaf
     mean::Float64
     impurity::Float64
+    n_samples::Int
 
     function RegressionLeaf(example, samples::Vector{Int}, impurity::Float64)
-        new(mean(example.y[samples]), impurity)
+        new(mean(example.y[samples]), impurity, length(samples))
     end
 end
 
@@ -72,6 +77,16 @@ getnode(tree::Tree, index::Int) = tree.nodes[index]
 getroot(tree::Tree) = getnode(tree, 1)
 getleft(tree::Tree, node::Node) = getnode(tree, node.left)
 getright(tree::Tree, node::Node) = getnode(tree, node.right)
+
+isnode(tree::Tree, index::Int) = isa(tree.nodes[index], Node)
+isleaf(tree::Tree, index::Int) = isa(tree.nodes[index], Leaf)
+isnode(node::Element) = isa(node, Node)
+isleaf(node::Element) = isa(node, Leaf)
+
+impurity(node::Node) = node.impurity
+impurity(leaf::Leaf) = leaf.impurity
+n_samples(node::Node) = node.n_samples
+n_samples(leaf::Leaf) = leaf.n_samples
 
 function next_index!(tree::Tree)
     push!(tree.nodes, undef)
@@ -153,7 +168,7 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     else
         left = next_index!(tree)
         right = next_index!(tree)
-        tree.nodes[index] = Node(best_feature, best_threshold, best_impurity, left, right)
+        tree.nodes[index] = Node(best_feature, best_threshold, best_impurity, n_samples, left, right)
         build_tree(tree, example, best_split_left, left, depth, params)
         build_tree(tree, example, best_split_right, right, depth, params)
     end

@@ -40,6 +40,7 @@ function fit!(rf::RandomForestRegressor, x, y)
         learner.trees[b] = tree
     end
 
+    set_improvements!(learner)
     rf.learner = learner
     return
 end

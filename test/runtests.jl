@@ -105,9 +105,14 @@ begin
     training_samples = sample(samples, 100, replace=false)
     test_samples = filter(i -> i ∉ training_samples, samples)
 
-    rf = RandomForestClassifier()
+    rf = RandomForestClassifier(n_estimators=100)
     fit!(rf, iris[training_samples, variables], iris[training_samples, output])
     @test accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables])) > .9
+
+    importances = feature_importances(rf)
+    @test sortperm(importances) == [2, 1, 3, 4]
+    @test importances[2] < .05  # minimum
+    @test importances[4] > .35  # maximum
 end
 
 begin
@@ -126,4 +131,8 @@ begin
     fit!(rf, boston[training_samples, variables], boston[training_samples, output])
     expected = convert(Vector{Float64}, boston[test_samples, output])
     @test rmsd(predict(rf, boston[test_samples, variables]), expected) < 5.
+
+    # no idea
+    importances = feature_importances(rf)
+    #@show importances
 end
