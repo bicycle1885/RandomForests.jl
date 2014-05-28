@@ -30,7 +30,6 @@ fit!(rf, boston[1:13], boston[:MedV])
 
 ## Limitations (and ToDo list)
 
-* no feature importance
 * no out-of-bag score
 * as for the classifier, Gini index criterion only
 * inefficient algorithm
