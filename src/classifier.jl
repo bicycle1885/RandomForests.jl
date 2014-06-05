@@ -8,6 +8,7 @@ type Classifier
     n_max_features::Int
     label_mapping::LabelMap
     improvements::Vector{Float64}
+    oob_error::Float64
     trees::Vector{Tree}
 
     function Classifier(rf, x, y)
@@ -23,7 +24,7 @@ type Classifier
         label_mapping = labelmap(y)
         improvements = zeros(Float64, n_features)
         trees = Array(Tree, rf.n_estimators)
-        new(n_samples, n_features, n_max_features, label_mapping, improvements, trees)
+        new(n_samples, n_features, n_max_features, label_mapping, improvements, nan(Float64), trees)
     end
 end
 
@@ -49,6 +50,7 @@ function fit!(rf::RandomForestClassifier, x, y)
     # pre-allocation
     bootstrap = Array(Int, n_samples)
     sample_weight = Array(Float64, n_samples)
+    oob_error = 0.
 
     for b in 1:rf.n_estimators
         rand!(1:n_samples, bootstrap)
@@ -57,9 +59,26 @@ function fit!(rf::RandomForestClassifier, x, y)
         tree = Trees.Tree()
         Trees.fit!(tree, example, Trees.Gini, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
+
+        hit = 0
+        miss = 0
+        for s in 1:n_samples
+            if sample_weight[s] != 0.0
+                continue
+            end
+
+            # out-of-bag sample
+            if Trees.predict(tree, x[s, :]) == y_encoded[s]
+                hit += 1
+            else
+                miss += 1
+            end
+        end
+        oob_error += miss / (hit + miss)
     end
 
     set_improvements!(learner)
+    learner.oob_error = oob_error / rf.n_estimators
     rf.learner = learner
     return
 end
@@ -92,4 +111,12 @@ function normalize!(v)
         v[i] = v[i] / s
     end
     return
+end
+
+function oob_error(rf::RandomForestClassifier)
+    if is(rf.learner, nothing)
+        error("not yet trained")
+    end
+
+    rf.learner.oob_error
 end

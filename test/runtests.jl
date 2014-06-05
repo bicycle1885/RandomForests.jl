@@ -107,12 +107,16 @@ begin
 
     rf = RandomForestClassifier(n_estimators=100)
     fit!(rf, iris[training_samples, variables], iris[training_samples, output])
-    @test accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables])) > .9
+    acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
+    @test acc > .9
 
     importances = feature_importances(rf)
     @test sortperm(importances) == [2, 1, 3, 4]
     @test importances[2] < .05  # minimum
     @test importances[4] > .35  # maximum
+
+    # the oob error should be close to the test error
+    @test abs(oob_error(rf) - (1. - acc)) < .01
 end
 
 begin
