@@ -27,7 +27,7 @@ begin
 
     rf = RandomForestRegressor()
     @test rf.n_estimators == 10
-    @test rf.max_features == :sqrt
+    @test rf.max_features == :third
     @test rf.max_depth == typemax(Int)
     @test rf.min_samples_split == 2
     @test rf.learner == nothing

@@ -23,7 +23,7 @@ end
 
 typealias RandomForestRegressor RandomForest{Regressor}
 
-function RandomForestRegressor(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2)
+function RandomForestRegressor(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:third, max_depth=nothing, min_samples_split::Int=2)
     RandomForest{Regressor}(n_estimators, max_features, max_depth, min_samples_split, :mse)
 end
 

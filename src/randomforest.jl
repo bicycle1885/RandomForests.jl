@@ -19,8 +19,8 @@ type RandomForest{T}
             error("max_features is too small (got: $max_features)")
         elseif isa(max_features, FloatingPoint) && !(0. < max_features <= 1.)
             error("max_features should be in (0, 1] (got: $max_features)")
-        elseif isa(max_features, Symbol) && !is(max_features, :sqrt)
-            error("max_features should be :sqrt (got: $max_features)")
+        elseif isa(max_features, Symbol) && !(is(max_features, :sqrt) || is(max_features, :third))
+            error("max_features should be :sqrt or :third (got: $max_features)")
         end
 
         if is(max_depth, nothing)
@@ -50,6 +50,8 @@ end
 function resolve_max_features(max_features::Any, n_features::Int)
     if is(max_features, :sqrt)
         ifloor(sqrt(n_features))
+    elseif is(max_features, :third)
+        div(n_features, 3)
     elseif isa(max_features, Integer)
         max(int(max_features), n_features)
     elseif isa(max_features, FloatingPoint)
