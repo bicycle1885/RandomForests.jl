@@ -32,4 +32,4 @@ fit!(rf, boston[1:13], boston[:MedV])
 
 * inefficient algorithm
 * less configurable parameters (compared to scikit learn)
-* parallelism
+* no parallelism
