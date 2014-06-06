@@ -23,6 +23,7 @@ begin
     @test rf.max_depth == typemax(Int)
     @test rf.min_samples_split == 2
     @test rf.learner == nothing
+    @test rf.criterion == RandomForests.Trees.Gini
 
     rf = RandomForestRegressor()
     @test rf.n_estimators == 10
@@ -34,11 +35,12 @@ end
 
 begin
     # set parameters
-    rf = RandomForestClassifier(n_estimators=10, max_features=.5, max_depth=6, min_samples_split=4)
+    rf = RandomForestClassifier(n_estimators=10, max_features=.5, max_depth=6, min_samples_split=4, criterion=:entropy)
     @test rf.n_estimators == 10
     @test rf.max_features == .5
     @test rf.max_depth == 6
     @test rf.min_samples_split == 4
+    @test rf.criterion == RandomForests.Trees.CrossEntropy
 
     rf = RandomForestRegressor(n_estimators=20, max_features=10, max_depth=10, min_samples_split=3)
     @test rf.n_estimators == 20
@@ -105,6 +107,7 @@ begin
     training_samples = sample(samples, 100, replace=false)
     test_samples = filter(i -> i ∉ training_samples, samples)
 
+    # Gini index criterion (default)
     rf = RandomForestClassifier(n_estimators=100)
     fit!(rf, iris[training_samples, variables], iris[training_samples, output])
     acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
@@ -116,6 +119,17 @@ begin
     @test importances[4] > .35  # maximum
 
     # the oob error should be close to the test error
+    @test abs(oob_error(rf) - (1. - acc)) < .01
+
+    # cross entropy criterion
+    srand(0x00)
+    rf = RandomForestClassifier(n_estimators=100, criterion=:entropy)
+    fit!(rf, iris[training_samples, variables], iris[training_samples, output])
+    acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
+    @test acc > .9
+
+    importances = feature_importances(rf)
+    @test sortperm(importances) == [2, 1, 4, 3]
     @test abs(oob_error(rf) - (1. - acc)) < .01
 end
 

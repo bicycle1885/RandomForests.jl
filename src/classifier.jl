@@ -30,6 +30,13 @@ end
 
 typealias RandomForestClassifier RandomForest{Classifier}
 
+function RandomForestClassifier(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2, criterion::Symbol=:gini)
+    if !(is(criterion, :gini) || is(criterion, :entropy))
+        error("criterion is invalid (got: $criterion)")
+    end
+    RandomForest{Classifier}(n_estimators, max_features, max_depth, min_samples_split, criterion)
+end
+
 function set_weight!(bootstrap::Vector{Int}, sample_weight::Vector{Float64})
     @assert length(bootstrap) == length(sample_weight)
     # initialize weight
@@ -57,7 +64,7 @@ function fit!(rf::RandomForestClassifier, x, y)
         set_weight!(bootstrap, sample_weight)
         example = Example(x, y_encoded, sample_weight)
         tree = Trees.Tree()
-        Trees.fit!(tree, example, Trees.Gini, learner.n_max_features, rf.max_depth, rf.min_samples_split)
+        Trees.fit!(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
 
         hit = 0

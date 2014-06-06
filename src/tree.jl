@@ -54,8 +54,10 @@ const undef = Undef()
 abstract Criterion
 
 immutable GiniCriterion <: Criterion; end  # Gini index
+immutable CrossEntropyCriterion <: Criterion; end  # cross entropy
 immutable MSECriterion <: Criterion; end  # Mean Sequared Error
 const Gini = GiniCriterion()
+const CrossEntropy = CrossEntropyCriterion()
 const MSE = MSECriterion()
 
 # parameters to build a tree
@@ -119,6 +121,10 @@ function leaf(example, samples, ::GiniCriterion)
     ClassificationLeaf(example, samples, impurity(samples, example, trues(length(example.y)), Gini))
 end
 
+function leaf(example, samples, ::CrossEntropyCriterion)
+    ClassificationLeaf(example, samples, impurity(samples, example, trues(length(example.y)), CrossEntropy))
+end
+
 function leaf(example, samples, ::MSECriterion)
     RegressionLeaf(example, samples, impurity(samples, example, trues(length(example.y)), MSE))
 end
@@ -174,8 +180,7 @@ function build_tree(tree, example, samples, index, depth, params::Params)
     return
 end
 
-# Gini index impurity
-function impurity(samples::Vector{Int}, example, filter::BitVector, ::GiniCriterion)
+function count_labels(samples::Vector{Int}, example, filter::BitVector)
     counts = zeros(Float64, example.n_labels)
     n_samples = 0.
     for s in samples
@@ -186,6 +191,11 @@ function impurity(samples::Vector{Int}, example, filter::BitVector, ::GiniCriter
         end
     end
 
+    counts, n_samples
+end
+
+function impurity(samples::Vector{Int}, example, filter::BitVector, ::GiniCriterion)
+    counts, n_samples = count_labels(samples, example, filter)
     gini_index = 0.
     for c in counts
         r = c / n_samples
@@ -194,7 +204,19 @@ function impurity(samples::Vector{Int}, example, filter::BitVector, ::GiniCriter
     1. - gini_index
 end
 
-# Mean Squared Error impurity
+function impurity(samples::Vector{Int}, example, filter::BitVector, ::CrossEntropyCriterion)
+    counts, n_samples = count_labels(samples, example, filter)
+    cross_entropy = 0.
+    for c in counts
+        p = c / n_samples
+        if p != 0.
+            cross_entropy -= p * log(p)
+        end
+    end
+    #@show cross_entropy
+    cross_entropy
+end
+
 function impurity(samples::Vector{Int}, example, filter::BitVector, ::MSECriterion)
     mean = 0.
     n_samples = 0.

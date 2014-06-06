@@ -30,7 +30,6 @@ fit!(rf, boston[1:13], boston[:MedV])
 
 ## Limitations (and ToDo list)
 
-* as for the classifier, Gini index criterion only
 * inefficient algorithm
 * less configurable parameters (compared to scikit learn)
 * parallelism

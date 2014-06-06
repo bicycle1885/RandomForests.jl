@@ -1,15 +1,16 @@
-import .Trees: getroot, getleft, getright, isnode, n_samples, impurity
+import .Trees: Criterion, Gini, CrossEntropy, MSE, getroot, getleft, getright, isnode, n_samples, impurity
 type RandomForest{T}
     # parameters
     n_estimators::Int
     max_features::Any
     max_depth::Int
     min_samples_split::Int
+    criterion::Criterion
 
     # learner
     learner::Union(T, Nothing)
 
-    function RandomForest(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2)
+    function RandomForest(n_estimators, max_features, max_depth, min_samples_split, criterion)
         if n_estimators < 1
             error("n_estimators is too small (got: $n_estimators)")
         end
@@ -32,7 +33,17 @@ type RandomForest{T}
             error("min_sample_split is too small (got: $min_samples_split)")
         end
 
-        new(n_estimators, max_features, max_depth, min_samples_split, nothing)
+        if is(criterion, :gini)
+            criterion = Gini
+        elseif is(criterion, :entropy)
+            criterion = CrossEntropy
+        elseif is(criterion, :mse)
+            criterion = MSE
+        else
+            error("criterion is invalid (got: $criterion)")
+        end
+
+        new(n_estimators, max_features, max_depth, min_samples_split, criterion, nothing)
     end
 end
 
