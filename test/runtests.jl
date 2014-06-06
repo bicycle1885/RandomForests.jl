@@ -22,14 +22,15 @@ begin
     @test rf.max_features == :sqrt
     @test rf.max_depth == typemax(Int)
     @test rf.min_samples_split == 2
-    @test rf.learner == nothing
     @test rf.criterion == RandomForests.Trees.Gini
+    @test rf.learner == nothing
 
     rf = RandomForestRegressor()
     @test rf.n_estimators == 10
     @test rf.max_features == :third
     @test rf.max_depth == typemax(Int)
     @test rf.min_samples_split == 2
+    @test rf.criterion == RandomForests.Trees.MSE
     @test rf.learner == nothing
 end
 
@@ -47,6 +48,7 @@ begin
     @test rf.max_features == 10
     @test rf.max_depth == 10
     @test rf.min_samples_split == 3
+    @test rf.criterion == RandomForests.Trees.MSE  # default
 end
 
 begin
