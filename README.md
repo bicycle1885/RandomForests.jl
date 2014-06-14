@@ -3,8 +3,6 @@
 [![Build Status](https://travis-ci.org/bicycle1885/RandomForests.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/RandomForests.jl)
 
 CART-based random forest implementation in Julia.
-At the current moment, this is alpha version and runs very ridiculously slow.
-But don't be depressed! I'm going to make it run much faster.
 
 ## Example
 
@@ -30,6 +28,5 @@ fit!(rf, boston[1:13], boston[:MedV])
 
 ## Limitations (and ToDo list)
 
-* inefficient algorithm
 * less configurable parameters (compared to scikit learn)
 * no parallelism
