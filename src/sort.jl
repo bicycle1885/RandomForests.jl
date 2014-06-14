@@ -44,7 +44,7 @@ function partition(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
     x[pivot_index], x[hi] = x[hi], x[pivot_index]
 
     p = lo
-    for i in lo:hi-1
+    @inbounds for i in lo:hi-1
         if y[i] <= pivot_value
             # swap elements at i and p
             y[i], y[p] = y[p], y[i]
