@@ -1,15 +1,41 @@
 import Base: sort!
 
 function sort!(samples::AbstractVector, feature::AbstractVector, range::Range{Int})
-    @assert length(feature) == length(range) <= length(samples)
-    sort!(sub(samples, range), feature, 1, endof(feature))
+    # inplace sort `samples` and `feature` vector in one shot, along with `feature`, between `range`
+    len = length(range)
+    @assert len == length(feature) <= length(samples)
+
+    # if the range subject to sorting is small, the insertion sort would be faster
+    if len <= 40
+        isort!(sub(samples, range), feature, 1, endof(feature))
+    else
+        qsort!(sub(samples, range), feature, 1, endof(feature))
+    end
 end
 
-function sort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
+# insertion sort
+function isort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
+    @inbounds for i in lo+1:hi
+        elm = y[i]
+        tmp = x[i]
+        j = i
+        while j > lo && y[j-1] > elm
+            # shift elements
+            y[j] = y[j-1]
+            x[j] = x[j-1]
+            j -= 1
+        end
+        y[j] = elm
+        x[j] = tmp
+    end
+end
+
+# quick sort
+function qsort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
     if lo <= hi
         p = partition(x, y, lo, hi)
-        sort!(x, y, lo, p - 1)
-        sort!(x, y, p + 1, hi)
+        qsort!(x, y, lo, p - 1)
+        qsort!(x, y, p + 1, hi)
     end
 end
 
