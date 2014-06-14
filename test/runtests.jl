@@ -156,3 +156,15 @@ begin
     importances = feature_importances(rf)
     #@show importances
 end
+
+begin
+    # use an array as input
+    srand(0x00)
+    iris = dataset("datasets", "iris")
+    rfc = RandomForestClassifier()
+    @test fit(rfc, array(iris[1:4]), vec(array(iris[:Species]))) === nothing
+
+    boston = dataset("MASS", "boston")
+    rfr = RandomForestRegressor()
+    @test fit(rfr, array(boston[1:13]), vec(array(boston[:MedV]))) === nothing
+end

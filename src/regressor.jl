@@ -61,7 +61,7 @@ function predict(rf::RandomForestRegressor, x)
     for i in 1:n_samples
         for b in 1:rf.n_estimators
             tree = rf.learner.trees[b]
-            vs[b] = Trees.predict(tree, x[i, :])
+            vs[b] = Trees.predict(tree, vec(x[i, :]))
         end
         output[i] = mean(vs)
     end

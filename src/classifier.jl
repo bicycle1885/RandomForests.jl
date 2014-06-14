@@ -75,7 +75,7 @@ function fit(rf::RandomForestClassifier, x, y)
             end
 
             # out-of-bag sample
-            if Trees.predict(tree, x[s, :]) == y_encoded[s]
+            if Trees.predict(tree, vec(x[s, :])) == y_encoded[s]
                 hit += 1
             else
                 miss += 1
@@ -103,7 +103,7 @@ function predict(rf::RandomForestClassifier, x)
         counts = zeros(Int, n_labels)
         for b in 1:rf.n_estimators
             tree = rf.learner.trees[b]
-            vote = Trees.predict(tree, x[i, :])
+            vote = Trees.predict(tree, vec(x[i, :]))
             counts[vote] += 1
         end
         output[i] = indmax(counts)

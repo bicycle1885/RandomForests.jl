@@ -311,14 +311,4 @@ function predict(tree::Tree, x::AbstractVector)
     end
 end
 
-function predict(tree::Tree, x::DataFrame)
-    size(x, 1) == 1 || error("x must be a single record")
-    ncol = size(x, 2)
-    v = Array(Any, ncol)
-    for i in 1:ncol
-        v[i] = x[1, i]
-    end
-    predict(tree, v)
-end
-
 end  # module Trees
