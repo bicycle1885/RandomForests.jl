@@ -49,7 +49,7 @@ function set_weight!(bootstrap::Vector{Int}, sample_weight::Vector{Float64})
     end
 end
 
-function fit!(rf::RandomForestClassifier, x, y)
+function fit(rf::RandomForestClassifier, x, y)
     learner = Classifier(rf, x, y)
     y_encoded = labelencode(learner.label_mapping, y)
     n_samples = learner.n_samples
@@ -64,7 +64,7 @@ function fit!(rf::RandomForestClassifier, x, y)
         set_weight!(bootstrap, sample_weight)
         example = Example(x, y_encoded, sample_weight)
         tree = Trees.Tree()
-        Trees.fit!(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
+        Trees.fit(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
 
         hit = 0

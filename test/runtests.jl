@@ -69,7 +69,7 @@ begin
     criterion = RandomForests.Trees.Gini
     max_depth = 1000
     min_samples_split = 2
-    RandomForests.Trees.fit!(tree, example, criterion, n_features, max_depth, min_samples_split)
+    RandomForests.Trees.fit(tree, example, criterion, n_features, max_depth, min_samples_split)
     for i in 1:n_samples
         @test RandomForests.Trees.predict(tree, vec(x[i, :])) == y[i]
     end
@@ -92,7 +92,7 @@ begin
     criterion = RandomForests.Trees.MSE
     max_depth = 1000
     min_samples_split = 2
-    RandomForests.Trees.fit!(tree, example, criterion, n_features, max_depth, min_samples_split)
+    RandomForests.Trees.fit(tree, example, criterion, n_features, max_depth, min_samples_split)
     for i in 1:n_samples
         @test_approx_eq RandomForests.Trees.predict(tree, vec(x[i, :])) y[i]
     end
@@ -111,7 +111,7 @@ begin
 
     # Gini index criterion (default)
     rf = RandomForestClassifier(n_estimators=100)
-    fit!(rf, iris[training_samples, variables], iris[training_samples, output])
+    fit(rf, iris[training_samples, variables], iris[training_samples, output])
     acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
     @test acc > .9
 
@@ -126,7 +126,7 @@ begin
     # cross entropy criterion
     srand(0x00)
     rf = RandomForestClassifier(n_estimators=100, criterion=:entropy)
-    fit!(rf, iris[training_samples, variables], iris[training_samples, output])
+    fit(rf, iris[training_samples, variables], iris[training_samples, output])
     acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
     @test acc > .9
 
@@ -148,7 +148,7 @@ begin
     test_samples = filter(i -> i ∉ training_samples, samples)
 
     rf = RandomForestRegressor(n_estimators=10)
-    fit!(rf, boston[training_samples, variables], boston[training_samples, output])
+    fit(rf, boston[training_samples, variables], boston[training_samples, output])
     expected = convert(Vector{Float64}, boston[test_samples, output])
     @test rmsd(predict(rf, boston[test_samples, variables]), expected) < 4.
 

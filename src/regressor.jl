@@ -27,7 +27,7 @@ function RandomForestRegressor(;n_estimators::Int=10, max_features::Union(Intege
     RandomForest{Regressor}(n_estimators, max_features, max_depth, min_samples_split, :mse)
 end
 
-function fit!(rf::RandomForestRegressor, x, y)
+function fit(rf::RandomForestRegressor, x, y)
     learner = Regressor(rf, x, y)
     n_samples = learner.n_samples
 
@@ -40,7 +40,7 @@ function fit!(rf::RandomForestRegressor, x, y)
         set_weight!(bootstrap, sample_weight)
         example = Example(x, y, sample_weight)
         tree = Trees.Tree()
-        Trees.fit!(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
+        Trees.fit(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
     end
 

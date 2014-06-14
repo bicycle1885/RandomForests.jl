@@ -3,7 +3,7 @@ module Trees
 using StatsBase
 using DataFrames
 
-export Tree, fit!, predict
+export Tree, fit, predict
 
 abstract Element
 
@@ -151,7 +151,7 @@ function next_index!(tree::Tree)
     tree.index += 1
 end
 
-function fit!(tree::Tree, example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
+function fit(tree::Tree, example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
     params = Params(criterion, max_features, max_depth, min_samples_split)
     samples = where(example.sample_weight)
     sample_range = 1:length(samples)
