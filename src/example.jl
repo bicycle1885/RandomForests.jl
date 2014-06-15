@@ -1,5 +1,3 @@
-using DataFrames
-
 type Example
     x::DataFrame
     y::AbstractVector

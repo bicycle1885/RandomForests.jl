@@ -38,7 +38,7 @@ function fit(rf::RandomForestRegressor, x, y)
     for b in 1:rf.n_estimators
         rand!(1:n_samples, bootstrap)
         set_weight!(bootstrap, sample_weight)
-        example = Example(x, y, sample_weight)
+        example = Trees.Example(x, y, sample_weight)
         tree = Trees.Tree()
         Trees.fit(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree

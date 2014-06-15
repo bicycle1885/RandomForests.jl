@@ -3,6 +3,9 @@ module Trees
 using StatsBase
 using DataFrames
 
+include("example.jl")
+include("sort.jl")
+
 export Tree, fit, predict
 
 abstract Element
@@ -23,7 +26,7 @@ type ClassificationLeaf <: Leaf
     impurity::Float64
     n_samples::Int
 
-    function ClassificationLeaf(example, samples::Vector{Int}, impurity::Float64)
+    function ClassificationLeaf(example::Example, samples::Vector{Int}, impurity::Float64)
         counts = zeros(Int, example.n_labels)
         for s in samples
             label = example.y[s]
@@ -40,7 +43,7 @@ type RegressionLeaf <: Leaf
     impurity::Float64
     n_samples::Int
 
-    function RegressionLeaf(example, samples::Vector{Int}, impurity::Float64)
+    function RegressionLeaf(example::Example, samples::Vector{Int}, impurity::Float64)
         new(mean(example.y[samples]), impurity, length(samples))
     end
 end
@@ -80,7 +83,7 @@ type Splitter
     samples::Vector{Int}
     feature::AbstractVector
     range::Range{Int}
-    example::Any  # cannot refer to Example ??
+    example::Example
     criterion::Criterion
 end
 
@@ -151,7 +154,7 @@ function next_index!(tree::Tree)
     tree.index += 1
 end
 
-function fit(tree::Tree, example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
+function fit(tree::Tree, example::Example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
     params = Params(criterion, max_features, max_depth, min_samples_split)
     samples = where(example.sample_weight)
     sample_range = 1:length(samples)
@@ -175,15 +178,15 @@ function where(v::AbstractVector)
     indices
 end
 
-function leaf(example, samples, criterion::RegressionCriterion)
+function leaf(example::Example, samples, criterion::RegressionCriterion)
     RegressionLeaf(example, samples, impurity(samples, example, criterion))
 end
 
-function leaf(example, samples, criterion::ClassificationCriterion)
+function leaf(example::Example, samples, criterion::ClassificationCriterion)
     ClassificationLeaf(example, samples, impurity(samples, example, criterion))
 end
 
-function build_tree(tree::Tree, example, samples::Vector{Int}, args::SplitArgs, params::Params)
+function build_tree(tree::Tree, example::Example, samples::Vector{Int}, args::SplitArgs, params::Params)
     n_features = example.n_features
     range = args.range  # shortcut
     n_samples = length(range)
@@ -236,7 +239,7 @@ function build_tree(tree::Tree, example, samples::Vector{Int}, args::SplitArgs, 
     return
 end
 
-function count_labels(samples::Vector{Int}, example)
+function count_labels(samples::Vector{Int}, example::Example)
     counts = zeros(Float64, example.n_labels)
     n_samples = 0.
     for s in samples
@@ -248,7 +251,7 @@ function count_labels(samples::Vector{Int}, example)
     counts, n_samples
 end
 
-function impurity(samples::Vector{Int}, example, ::GiniCriterion)
+function impurity(samples::Vector{Int}, example::Example, ::GiniCriterion)
     counts, n_samples = count_labels(samples, example)
     gini_index = 0.
     for c in counts
@@ -258,7 +261,7 @@ function impurity(samples::Vector{Int}, example, ::GiniCriterion)
     1. - gini_index
 end
 
-function impurity(samples::Vector{Int}, example, ::CrossEntropyCriterion)
+function impurity(samples::Vector{Int}, example::Example, ::CrossEntropyCriterion)
     counts, n_samples = count_labels(samples, example)
     cross_entropy = 0.
     for c in counts
@@ -270,7 +273,7 @@ function impurity(samples::Vector{Int}, example, ::CrossEntropyCriterion)
     cross_entropy
 end
 
-function impurity(samples::Vector{Int}, example, ::MSECriterion)
+function impurity(samples::Vector{Int}, example::Example, ::MSECriterion)
     mean = 0.
     n_samples = 0.
 

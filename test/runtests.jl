@@ -64,7 +64,7 @@ begin
          1 2 2 2;]
     y = [1, 1, 1, 1, 2, 2, 2, 2]
     n_samples, n_features = size(x)
-    example = Example(x, y)
+    example = RandomForests.Trees.Example(x, y)
     tree = RandomForests.Trees.Tree()
     criterion = RandomForests.Trees.Gini
     max_depth = 1000
@@ -87,7 +87,7 @@ begin
          1 2 2 2;]
     y = [0., 0., 1., 1., 1., 1., 2., 2.]
     n_samples, n_features = size(x)
-    example = Example(x, y)
+    example = RandomForests.Trees.Example(x, y)
     tree = RandomForests.Trees.Tree()
     criterion = RandomForests.Trees.MSE
     max_depth = 1000
