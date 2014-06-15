@@ -1,16 +1,25 @@
 import Base: sort!
 
-function sort!(samples::AbstractVector, feature::AbstractVector, range::Range{Int})
+const SMALL_THRESHOLD = 40
+
+function sort!(samples::AbstractVector, feature::AbstractVector, range::UnitRange{Int})
     # inplace sort `samples` and `feature` vector in one shot, along with `feature`, between `range`
     len = length(range)
     @assert len == length(feature) <= length(samples)
+    sort!(sub(samples, range), feature, 1, endof(feature))
+end
 
+function sort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
     # if the range subject to sorting is small, the insertion sort would be faster
-    if len <= 40
-        isort!(sub(samples, range), feature, 1, endof(feature))
+    if hi - lo <= SMALL_THRESHOLD
+        isort!(x, y, lo, hi)
     else
-        qsort!(sub(samples, range), feature, 1, endof(feature))
+        # quick sort
+        p = partition(x, y, lo, hi)
+        sort!(x, y, lo, p - 1)
+        sort!(x, y, p + 1, hi)
     end
+    return
 end
 
 # insertion sort
@@ -27,15 +36,6 @@ function isort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
         end
         y[j] = elm
         x[j] = tmp
-    end
-end
-
-# quick sort
-function qsort!(x::AbstractVector, y::AbstractVector, lo::Int, hi::Int)
-    if lo <= hi
-        p = partition(x, y, lo, hi)
-        qsort!(x, y, lo, p - 1)
-        qsort!(x, y, p + 1, hi)
     end
 end
 

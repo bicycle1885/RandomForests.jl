@@ -5,6 +5,7 @@ using DataFrames
 
 include("example.jl")
 include("sort.jl")
+include("split.jl")
 
 export Tree, fit, predict
 
@@ -53,20 +54,10 @@ Base.mean(leaf::RegressionLeaf) = leaf.mean
 immutable Undef <: Element; end
 const undef = Undef()
 
-abstract Criterion
-abstract ClassificationCriterion <: Criterion
-abstract RegressionCriterion <: Criterion
-
-immutable GiniCriterion <: ClassificationCriterion; end  # Gini index
-immutable CrossEntropyCriterion <: ClassificationCriterion; end  # cross entropy
-immutable MSECriterion <: RegressionCriterion; end  # Mean Sequared Error
-const Gini = GiniCriterion()
-const CrossEntropy = CrossEntropyCriterion()
-const MSE = MSECriterion()
-
 # parameters to build a tree
 immutable Params
     criterion::Criterion
+    splitter  # splitter constructor
     max_features::Int
     max_depth::Int
     min_samples_split::Int
@@ -76,55 +67,7 @@ end
 immutable SplitArgs
     index::Int
     depth::Int
-    range::Range{Int}
-end
-
-type Splitter
-    samples::Vector{Int}
-    feature::AbstractVector
-    range::Range{Int}
-    example::Example
-    criterion::Criterion
-end
-
-immutable Split{T}
-    threshold::T
-    boundary::Int
-    left_range::Range{Int}
-    right_range::Range{Int}
-    left_impurity::Float64
-    right_impurity::Float64
-end
-
-Base.start(sp::Splitter) = 1
-
-function Base.done(sp::Splitter, state)
-    # constant feature
-    sp.feature[state] == sp.feature[end]
-end
-
-function Base.next(sp::Splitter, state)
-    n_samples = length(sp.range)
-    feature = sp.feature
-
-    # seek for the next boundary
-    local threshold, boundary = 0
-    for i in state:n_samples-1
-        if feature[i] != feature[i+1]
-            boundary = i
-            threshold = feature[i]
-            break
-        end
-    end
-
-    @assert boundary > 0
-
-    r = sp.range  # shortcut
-    left_range = r[1:boundary]
-    right_range = r[boundary+1:end]
-    left_impurity = impurity(sp.samples[left_range], sp.example, sp.criterion)
-    right_impurity = impurity(sp.samples[right_range], sp.example, sp.criterion)
-    Split(threshold, boundary, left_range, right_range, left_impurity, right_impurity), boundary + 1
+    range::UnitRange{Int}
 end
 
 type Tree
@@ -155,7 +98,14 @@ function next_index!(tree::Tree)
 end
 
 function fit(tree::Tree, example::Example, criterion::Criterion, max_features::Int, max_depth::Int, min_samples_split::Int)
-    params = Params(criterion, max_features, max_depth, min_samples_split)
+    if isa(criterion, ClassificationCriterion)
+        splitter = ClassificationSplitter{typeof(criterion)}
+    elseif isa(criterion, RegressionCriterion)
+        splitter = RegressionSplitter{typeof(criterion)}
+    else
+        error("invalid criterion")
+    end
+    params = Params(criterion, splitter, max_features, max_depth, min_samples_split)
     samples = where(example.sample_weight)
     sample_range = 1:length(samples)
     next_index!(tree)
@@ -203,12 +153,10 @@ function build_tree(tree::Tree, example::Example, samples::Vector{Int}, args::Sp
     for k in sample(1:n_features, params.max_features, replace=false)
         feature = example.x[samples[range], k]
         sort!(samples, feature, range)
-        splitter = Splitter(samples, feature, range, example, params.criterion)
+        splitter = params.splitter(samples, feature, range, example)
 
         for s in splitter
-            n_left_samples = length(s.left_range)
-            n_right_samples = n_samples - n_left_samples
-            averaged_impurity = (s.left_impurity * n_left_samples + s.right_impurity * n_right_samples) / (n_left_samples + n_right_samples)
+            averaged_impurity = (s.left_impurity * s.n_left_samples + s.right_impurity * s.n_right_samples) / (s.n_left_samples + s.n_right_samples)
 
             if averaged_impurity < best_impurity
                 best_impurity = averaged_impurity
@@ -237,59 +185,6 @@ function build_tree(tree::Tree, example::Example, samples::Vector{Int}, args::Sp
     end
 
     return
-end
-
-function count_labels(samples::Vector{Int}, example::Example)
-    counts = zeros(Float64, example.n_labels)
-    n_samples = 0.
-    for s in samples
-        n_samples += example.sample_weight[s]
-        label = example.y[s]
-        counts[label] += example.sample_weight[s]
-    end
-
-    counts, n_samples
-end
-
-function impurity(samples::Vector{Int}, example::Example, ::GiniCriterion)
-    counts, n_samples = count_labels(samples, example)
-    gini_index = 0.
-    for c in counts
-        r = c / n_samples
-        gini_index += r * r
-    end
-    1. - gini_index
-end
-
-function impurity(samples::Vector{Int}, example::Example, ::CrossEntropyCriterion)
-    counts, n_samples = count_labels(samples, example)
-    cross_entropy = 0.
-    for c in counts
-        p = c / n_samples
-        if p != 0.
-            cross_entropy -= p * log(p)
-        end
-    end
-    cross_entropy
-end
-
-function impurity(samples::Vector{Int}, example::Example, ::MSECriterion)
-    mean = 0.
-    n_samples = 0.
-
-    for s in samples
-        mean += example.y[s]
-        n_samples += example.sample_weight[s]
-    end
-    mean /= n_samples
-
-    mse = 0.
-    for s in samples
-        error = example.y[s] - mean
-        mse += error * error
-    end
-
-    mse / n_samples
 end
 
 function predict(tree::Tree, x::AbstractVector)

@@ -1,4 +1,5 @@
-import .Trees: Criterion, Gini, CrossEntropy, MSE, getroot, getleft, getright, isnode, n_samples, impurity
+import .Trees: Tree, Node, Leaf, Criterion, Gini, CrossEntropy, MSE, getroot, getleft, getright, isnode, n_samples, impurity
+
 type RandomForest{T}
     # parameters
     n_estimators::Int
@@ -80,18 +81,21 @@ function set_improvements!(learner)
     normalize!(improvements)
 end
 
-function add_improvements!(tree, node, improvements)
-    if isnode(node)
-        left = getleft(tree, node)
-        right = getright(tree, node)
-        n_left_samples = n_samples(left)
-        n_right_samples = n_samples(right)
-        averaged_impurity = (impurity(left) * n_left_samples + impurity(right) * n_right_samples) / (n_left_samples + n_right_samples)
-        improvement = impurity(node) - averaged_impurity
-        improvements[node.feature] += improvement
+function add_improvements!(tree::Tree, node::Node, improvements::Vector{Float64})
+    left = getleft(tree, node)
+    right = getright(tree, node)
+    n_left_samples = n_samples(left)
+    n_right_samples = n_samples(right)
+    averaged_impurity = (impurity(left) * n_left_samples + impurity(right) * n_right_samples) / (n_left_samples + n_right_samples)
+    improvement = impurity(node) - averaged_impurity
+    improvements[node.feature] += improvement
 
-        add_improvements!(tree, left, improvements)
-        add_improvements!(tree, right, improvements)
-    end
+    add_improvements!(tree, left, improvements)
+    add_improvements!(tree, right, improvements)
+    return
+end
+
+function add_improvements!(::Tree, ::Leaf, ::Vector{Float64})
+    # do nothing!
     return
 end
