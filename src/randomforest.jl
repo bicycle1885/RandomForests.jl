@@ -1,4 +1,4 @@
-import .Trees: Tree, Node, Leaf, Criterion, Gini, CrossEntropy, MSE, getroot, getleft, getright, isnode, n_samples, impurity
+import .Trees: TabularData, Tree, Node, Leaf, Criterion, Gini, CrossEntropy, MSE, getroot, getleft, getright, isnode, n_samples, impurity
 
 type RandomForest{T}
     # parameters

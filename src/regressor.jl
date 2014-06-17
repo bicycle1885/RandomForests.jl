@@ -27,7 +27,7 @@ function RandomForestRegressor(;n_estimators::Int=10, max_features::Union(Intege
     RandomForest{Regressor}(n_estimators, max_features, max_depth, min_samples_split, :mse)
 end
 
-function fit(rf::RandomForestRegressor, x, y)
+function fit{T<:TabularData}(rf::RandomForestRegressor, x::T, y::AbstractVector)
     learner = Regressor(rf, x, y)
     n_samples = learner.n_samples
 
@@ -38,7 +38,7 @@ function fit(rf::RandomForestRegressor, x, y)
     for b in 1:rf.n_estimators
         rand!(1:n_samples, bootstrap)
         set_weight!(bootstrap, sample_weight)
-        example = Trees.Example(x, y, sample_weight)
+        example = Trees.Example{T}(x, y, sample_weight)
         tree = Trees.Tree()
         Trees.fit(tree, example, rf.criterion, learner.n_max_features, rf.max_depth, rf.min_samples_split)
         learner.trees[b] = tree
@@ -49,7 +49,7 @@ function fit(rf::RandomForestRegressor, x, y)
     return
 end
 
-function predict(rf::RandomForestRegressor, x)
+function predict{T<:TabularData}(rf::RandomForestRegressor, x::T)
     if is(rf.learner, nothing)
         error("not yet trained")
     end
