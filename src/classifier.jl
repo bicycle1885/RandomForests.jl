@@ -109,7 +109,9 @@ function predict(rf::RandomForestClassifier, x)
         output[i] = indmax(counts)
     end
 
-    labeldecode(rf.learner.label_mapping, output)
+    # TODO: use labeldecode method when MLBase.jl is released
+    # labeldecode(rf.learner.label_mapping, output)
+    [rf.learner.label_mapping.vs[o] for o in output]
 end
 
 function normalize!(v)
