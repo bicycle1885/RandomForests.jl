@@ -174,8 +174,10 @@ begin
     iris = dataset("datasets", "iris")
     rfc = RandomForestClassifier()
     @test fit(rfc, array(iris[1:4]), vec(array(iris[:Species]))) === nothing
+    @test isa(predict(rfc, array(iris[1:4])), Vector{ASCIIString})
 
     boston = dataset("MASS", "boston")
     rfr = RandomForestRegressor()
     @test fit(rfr, array(boston[1:13]), vec(array(boston[:MedV]))) === nothing
+    @test isa(predict(rfr, array(boston[1:13])), Vector{Float64})
 end

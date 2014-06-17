@@ -6,6 +6,7 @@ type Classifier
     n_features::Int
     n_max_features::Int
     label_mapping::LabelMap
+    outtype::DataType
     improvements::Vector{Float64}
     oob_error::Float64
     trees::Vector{Tree}
@@ -21,9 +22,10 @@ type Classifier
         @assert 0 < n_max_features <= n_features
 
         label_mapping = labelmap(y)
+        outtype = eltype(y)
         improvements = zeros(Float64, n_features)
         trees = Array(Tree, rf.n_estimators)
-        new(n_samples, n_features, n_max_features, label_mapping, improvements, nan(Float64), trees)
+        new(n_samples, n_features, n_max_features, label_mapping, outtype, improvements, nan(Float64), trees)
     end
 end
 
@@ -110,7 +112,11 @@ function predict{T<:TabularData}(rf::RandomForestClassifier, x::T)
 
     # TODO: use labeldecode method when MLBase.jl is released
     # labeldecode(rf.learner.label_mapping, output)
-    [rf.learner.label_mapping.vs[o] for o in output]
+    predicted = Array(rf.learner.outtype, n_samples)
+    for (i, o) in enumerate(output)
+        predicted[i] = rf.learner.label_mapping.vs[o]
+    end
+    predicted
 end
 
 function normalize!(v)
