@@ -166,6 +166,14 @@ begin
     # no idea
     importances = feature_importances(rf)
     #@show importances
+
+    training_samples = sample(samples, div(n_samples, 2), replace=false)
+    test_samples = filter(i -> i ∉ training_samples, samples)
+    rf = RandomForestRegressor(n_estimators=100)
+    fit(rf, boston[training_samples, variables], boston[training_samples, output])
+    expected = convert(Vector{Float64}, boston[test_samples, output])
+    err = rmsd(predict(rf, boston[test_samples, variables]), expected)
+    @test abs(oob_error(rf) - err) < .5
 end
 
 begin
