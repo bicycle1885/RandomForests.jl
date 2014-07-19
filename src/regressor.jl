@@ -35,7 +35,8 @@ function fit{T<:TabularData}(rf::RandomForestRegressor, x::T, y::AbstractVector)
     # pre-allocation
     bootstrap = Array(Int, n_samples)
     sample_weight = Array(Float64, n_samples)
-    oob_predict = zeros(n_samples, rf.n_estimators)
+    oob_predict = zeros(n_samples)
+    oob_count = zeros(Int, n_samples)
 
     for b in 1:rf.n_estimators
         rand!(1:n_samples, bootstrap)
@@ -47,9 +48,8 @@ function fit{T<:TabularData}(rf::RandomForestRegressor, x::T, y::AbstractVector)
 
         for s in 1:n_samples
             if sample_weight[s] == 0.0
-                oob_predict[s, b] = Trees.predict(tree, vec(x[s, :]))
-            else
-                oob_predict[s, b] = NaN
+                oob_predict[s] += Trees.predict(tree, vec(x[s, :]))
+                oob_count[s] += 1
             end
         end
     end
@@ -57,22 +57,17 @@ function fit{T<:TabularData}(rf::RandomForestRegressor, x::T, y::AbstractVector)
     oob_error = 0.
 
     for s in 1:n_samples
-        avg = 0.0
-        n = 0
-        for b in 1:rf.n_estimators
-            p = oob_predict[s, b]
-            if !isnan(p)
-                avg += p
-                n += 1
-            end
+        if oob_count[s] == 0
+            continue
         end
-        avg /= n
+
+        avg = oob_predict[s] / oob_count[s]
         d = y[s] - avg
         oob_error += d * d
     end
 
     set_improvements!(learner)
-    learner.oob_error = sqrt(oob_error / n_samples)
+    learner.oob_error = sqrt(oob_error / countnz(oob_count))
     rf.learner = learner
     return
 end
