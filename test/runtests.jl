@@ -1,8 +1,14 @@
-using RDatasets
 using StatsBase
 using MLBase
 using Base.Test
+using DataFrames
 using RandomForests
+
+const testdir = dirname(@__FILE__)
+
+# sample datasets for test
+load_iris() = readtable(joinpath(testdir, "data", "iris.csv"))
+load_boston() = readtable(joinpath(testdir, "data", "Boston.csv"))
 
 function accuracy(given::AbstractVector, predicted::AbstractVector)
     @assert length(given) == length(predicted)
@@ -101,7 +107,7 @@ end
 begin
     srand(0x00)
 
-    iris = dataset("datasets", "iris")
+    iris = load_iris()
     samples = 1:150
     variables = 1:4
     output = :Species
@@ -139,7 +145,7 @@ end
 begin
     srand(0x00)
 
-    boston = dataset("MASS", "boston")
+    boston = load_boston()
     n_samples = size(boston, 1)
     samples = 1:n_samples
     variables = 1:13
@@ -179,12 +185,12 @@ end
 begin
     # use an array as input
     srand(0x00)
-    iris = dataset("datasets", "iris")
+    iris = load_iris()
     rfc = RandomForestClassifier()
     @test fit(rfc, array(iris[1:4]), vec(array(iris[:Species]))) === nothing
-    @test isa(predict(rfc, array(iris[1:4])), Vector{ASCIIString})
+    @test isa(predict(rfc, array(iris[1:4])), Vector{UTF8String})
 
-    boston = dataset("MASS", "boston")
+    boston = load_boston()
     rfr = RandomForestRegressor()
     @test fit(rfr, array(boston[1:13]), vec(array(boston[:MedV]))) === nothing
     @test isa(predict(rfr, array(boston[1:13])), Vector{Float64})
