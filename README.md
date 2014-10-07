@@ -127,3 +127,12 @@ The feature importances are normalized values such that the sum of the importanc
 ## Limitations (and ToDo list)
 
 * no parallelism
+
+## Related package
+
+* [DecisionTree.jl](https://github.com/bensadeghi/DecisionTree.jl)
+    * DecisionTree.jl is based on the ID3 (Iterative Dichotomiser 3) algorithm while RandomForests.jl uses CART (Classification And Regression Tree).
+
+## Acknowledgement
+
+The algorithm and interface are highly inspired by those of [scikit-learn](http://scikit-learn.org).
