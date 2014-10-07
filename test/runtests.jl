@@ -21,7 +21,7 @@ function accuracy(given::AbstractVector, predicted::AbstractVector)
     counteq / length(given)
 end
 
-begin
+let
     # default parameters
     rf = RandomForestClassifier()
     @test rf.n_estimators == 10
@@ -40,7 +40,7 @@ begin
     @test rf.learner == nothing
 end
 
-begin
+let
     # set parameters
     rf = RandomForestClassifier(n_estimators=10, max_features=.5, max_depth=6, min_samples_split=4, criterion=:entropy)
     @test rf.n_estimators == 10
@@ -57,7 +57,7 @@ begin
     @test rf.criterion == RandomForests.Trees.MSE  # default
 end
 
-begin
+let
     srand(0x00)
     # test tree
     x = [0 0 0 1;
@@ -81,7 +81,7 @@ begin
     end
 end
 
-begin
+let
     srand(0x00)
     x = [0 0 0 1;
          0 0 1 1;
@@ -104,7 +104,7 @@ begin
     end
 end
 
-begin
+let
     srand(0x00)
 
     iris = load_iris()
@@ -142,7 +142,7 @@ begin
     @test abs(oob_error(rf) - (1. - acc)) < .01
 end
 
-begin
+let
     srand(0x00)
 
     boston = load_boston()
@@ -182,7 +182,7 @@ begin
     @test abs(oob_error(rf) - err) < .5
 end
 
-begin
+let
     # use an array as input
     srand(0x00)
     iris = load_iris()
