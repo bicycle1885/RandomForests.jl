@@ -1,8 +1,14 @@
 module RandomForests
 
-using DataFrames
+export
+    RandomForestClassifier,
+    RandomForestRegressor,
+    fit,
+    predict,
+    feature_importances,
+    oob_error
 
-export RandomForestClassifier, RandomForestRegressor, fit, predict, feature_importances, oob_error
+using DataFrames
 
 include("util.jl")
 include("tree.jl")

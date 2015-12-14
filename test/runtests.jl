@@ -105,7 +105,7 @@ let
 end
 
 let
-    srand(0x00)
+    srand(1234)
 
     iris = load_iris()
     samples = 1:150
@@ -115,71 +115,54 @@ let
     training_samples = sample(samples, 100, replace=false)
     test_samples = filter(i -> i ∉ training_samples, samples)
 
-    # Gini index criterion (default)
-    rf = RandomForestClassifier(n_estimators=100)
-    fit(rf, iris[training_samples, variables], iris[training_samples, output])
-    acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
-    @test acc > .9
+    for criterion in [:gini, :entropy]
+        accs = Float64[]
+        errs = Float64[]
+        importances = zeros(4)
 
-    importances = feature_importances(rf)
-    @test sortperm(importances) == [2, 1, 3, 4]
-    @test importances[2] < .10  # minimum
-    @test importances[4] > .35  # maximum
+        for _ in 1:30
+            rf = RandomForestClassifier(n_estimators=100, criterion=criterion)
+            RandomForests.fit(rf, iris[training_samples, variables], iris[training_samples, output])
+            acc = accuracy(iris[test_samples, output], RandomForests.predict(rf, iris[test_samples, variables]))
+            push!(accs, acc)
+            push!(errs, oob_error(rf))
+            importances .+= feature_importances(rf)
+        end
 
-    # the oob error should be close to the test error
-    @test abs(oob_error(rf) - (1. - acc)) < .01
-
-    # cross entropy criterion
-    srand(0x00)
-    rf = RandomForestClassifier(n_estimators=100, criterion=:entropy)
-    fit(rf, iris[training_samples, variables], iris[training_samples, output])
-    acc = accuracy(iris[test_samples, output], predict(rf, iris[test_samples, variables]))
-    @test acc > .9
-
-    importances = feature_importances(rf)
-    # TODO: is this okay?
-    @test sortperm(importances) == [2, 4, 1, 3]
-    @test abs(oob_error(rf) - (1. - acc)) < .01
+        @test mean(accs) > 0.89
+        @test abs(mean(errs) - (1 - mean(accs))) < 0.05
+        @test sortperm(importances) == [2, 1, 3, 4]
+    end
 end
 
 let
-    srand(0x00)
+    srand(1234)
 
     boston = load_boston()
     n_samples = size(boston, 1)
     samples = 1:n_samples
     variables = 1:13
     output = :MedV
-    rmsds = Float64[]
-
-    for i in 1:30
-        training_samples = sample(samples, div(n_samples, 2), replace=false)
-        test_samples = filter(i -> i ∉ training_samples, samples)
-
-        rf = RandomForestRegressor(n_estimators=20)
-        fit(rf, boston[training_samples, variables], boston[training_samples, output])
-        expected = convert(Vector{Float64}, boston[test_samples, output])
-        push!(rmsds, rmsd(predict(rf, boston[test_samples, variables]), expected))
-    end
-
-    #@show mean(rmsds)
-    #@show var(rmsds)
-    #@show maximum(rmsds)
-    #@show minimum(rmsds)
-    @test mean(rmsds) < 4.0
-    @test var(rmsds) < .5
-
-    # no idea
-    importances = feature_importances(rf)
-    #@show importances
 
     training_samples = sample(samples, div(n_samples, 2), replace=false)
     test_samples = filter(i -> i ∉ training_samples, samples)
-    rf = RandomForestRegressor(n_estimators=100)
-    fit(rf, boston[training_samples, variables], boston[training_samples, output])
-    expected = convert(Vector{Float64}, boston[test_samples, output])
-    err = rmsd(predict(rf, boston[test_samples, variables]), expected)
-    @test abs(oob_error(rf) - err) < .5
+
+    rmsds = Float64[]
+    errs = Float64[]
+    for _ in 1:30
+        rf = RandomForestRegressor(n_estimators=100)
+        RandomForests.fit(rf, boston[training_samples, variables], boston[training_samples, output])
+        expected = convert(Vector{Float64}, boston[test_samples, output])
+        push!(rmsds, rmsd(RandomForests.predict(rf, boston[test_samples, variables]), expected))
+        push!(errs, oob_error(rf))
+    end
+
+    @test mean(rmsds) < 5.0
+    @test var(rmsds) < 0.05
+    @test abs(mean(errs) - mean(rmsds)) < 2.0
+
+    # no test here (is there any good way?)
+    #feature_importances(rf)
 end
 
 let
@@ -187,11 +170,11 @@ let
     srand(0x00)
     iris = load_iris()
     rfc = RandomForestClassifier()
-    @test fit(rfc, array(iris[1:4]), vec(array(iris[:Species]))) === nothing
-    @test isa(predict(rfc, array(iris[1:4])), Vector{UTF8String})
+    @test RandomForests.fit(rfc, Array(iris[1:4]), vec(Array(iris[:Species]))) === nothing
+    @test isa(RandomForests.predict(rfc, Array(iris[1:4])), Vector{UTF8String})
 
     boston = load_boston()
     rfr = RandomForestRegressor()
-    @test fit(rfr, array(boston[1:13]), vec(array(boston[:MedV]))) === nothing
-    @test isa(predict(rfr, array(boston[1:13])), Vector{Float64})
+    @test RandomForests.fit(rfr, Array(boston[1:13]), vec(Array(boston[:MedV]))) === nothing
+    @test isa(RandomForests.predict(rfr, Array(boston[1:13])), Vector{Float64})
 end

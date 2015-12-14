@@ -1,4 +1,4 @@
-typealias TabularData Union(AbstractMatrix, DataFrame)
+typealias TabularData Union{AbstractMatrix,DataFrame}
 
 type Example{T<:TabularData}
     x::T  # tabular data

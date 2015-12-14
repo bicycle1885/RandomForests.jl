@@ -18,13 +18,13 @@ type Regressor
 
         improvements = zeros(Float64, n_features)
         trees = Array(Tree, rf.n_estimators)
-        new(n_samples, n_features, n_max_features, improvements, nan(Float64), trees)
+        new(n_samples, n_features, n_max_features, improvements, NaN, trees)
     end
 end
 
 typealias RandomForestRegressor RandomForest{Regressor}
 
-function RandomForestRegressor(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:third, max_depth=nothing, min_samples_split::Int=2)
+function RandomForestRegressor(;n_estimators::Int=10, max_features::Union{Integer,AbstractFloat,Symbol}=:third, max_depth=nothing, min_samples_split::Int=2)
     RandomForest{Regressor}(n_estimators, max_features, max_depth, min_samples_split, :mse)
 end
 
@@ -39,7 +39,7 @@ function fit{T<:TabularData}(rf::RandomForestRegressor, x::T, y::AbstractVector)
     oob_count = zeros(Int, n_samples)
 
     for b in 1:rf.n_estimators
-        rand!(1:n_samples, bootstrap)
+        rand!(bootstrap, 1:n_samples)
         set_weight!(bootstrap, sample_weight)
         example = Trees.Example{T}(x, y, sample_weight)
         tree = Trees.Tree()

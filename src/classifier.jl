@@ -25,13 +25,13 @@ type Classifier
         outtype = eltype(y)
         improvements = zeros(Float64, n_features)
         trees = Array(Tree, rf.n_estimators)
-        new(n_samples, n_features, n_max_features, label_mapping, outtype, improvements, nan(Float64), trees)
+        new(n_samples, n_features, n_max_features, label_mapping, outtype, improvements, NaN, trees)
     end
 end
 
 typealias RandomForestClassifier RandomForest{Classifier}
 
-function RandomForestClassifier(;n_estimators::Int=10, max_features::Union(Integer, FloatingPoint, Symbol)=:sqrt, max_depth=nothing, min_samples_split::Int=2, criterion::Symbol=:gini)
+function RandomForestClassifier(;n_estimators::Int=10, max_features::Union{Integer,AbstractFloat,Symbol}=:sqrt, max_depth=nothing, min_samples_split::Int=2, criterion::Symbol=:gini)
     if !(is(criterion, :gini) || is(criterion, :entropy))
         error("criterion is invalid (got: $criterion)")
     end
@@ -61,7 +61,7 @@ function fit{T<:TabularData}(rf::RandomForestClassifier, x::T, y::AbstractVector
     oob_error = 0.
 
     for b in 1:rf.n_estimators
-        rand!(1:n_samples, bootstrap)
+        rand!(bootstrap, 1:n_samples)
         set_weight!(bootstrap, sample_weight)
         example = Trees.Example{T}(x, y_encoded, sample_weight)
         tree = Trees.Tree()

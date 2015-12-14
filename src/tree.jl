@@ -31,7 +31,7 @@ type ClassificationLeaf <: Leaf
         counts = zeros(Int, example.n_labels)
         for s in samples
             label = example.y[s]
-            counts[label] += int(example.sample_weight[s])
+            counts[label] += round(Int, example.sample_weight[s])
         end
         new(counts, impurity, length(samples))
     end
